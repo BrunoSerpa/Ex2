@@ -1,15 +1,16 @@
+from usuario import cadastrarUsuario, atualizarUsuario, listarUsuario, deletarUsuario
 from validacoes import validarNaoVazio
 import os
 
-def menuCliente():
+def menuUsuario():
     while True:
         print("================================")
         print("O que deseja fazer?")
         print("--------------------------------")
-        print("1 - Cadastar cliente")
-        print("2 - Listar clientes")
-        print("3 - Atualizar cliente")
-        print("4 - Deletar cliente")
+        print("1 - Cadastar usuario")
+        print("2 - Listar usuarios")
+        print("3 - Atualizar usuario")
+        print("4 - Deletar usuario")
         print("--------------------------------")
         print("0 - Voltar para menu")
         print("================================")
@@ -21,13 +22,13 @@ def menuCliente():
         if opcao == "0":
             break
         elif opcao == "1":
-            cadastrarCliente()
+            cadastrarUsuario()
         elif opcao == "2":
-            listarCliente()
+            listarUsuario()
         elif opcao == "3":
-            atualizarCliente()
+            atualizarUsuario()
         elif opcao == "4":
-            deletarCliente()
+            deletarUsuario()
         else:
             print("Opção inválida!")
 
@@ -120,7 +121,7 @@ def Home():
         print("================================")
         print("O que deseja fazer?")
         print("--------------------------------")
-        print("1 - Gerenciar Clientes")
+        print("1 - Gerenciar Usuarios")
         print("2 - Gerenciar Vendedores")
         print("3 - Gerenciar Produtos")
         print("4 - Gerenciar Compras")
@@ -135,7 +136,7 @@ def Home():
         if opcao == "0":
             break
         elif opcao == "1":
-            menuCliente()
+            menuUsuario()
         elif opcao == "2":
             menuVendedor()
         elif opcao == "3":
