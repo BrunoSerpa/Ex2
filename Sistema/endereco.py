@@ -1,6 +1,8 @@
 # VALIDAÇÕES
 from validacoes import validarNaoVazio, validarNumero
 
+from formatacaoJson import enderecoJson
+
 # FUNÇÃO OBTER ENDEREÇO
 def obterEndereco(cod_endereco):
     endereco = {
@@ -16,23 +18,12 @@ def obterEndereco(cod_endereco):
     }
     return endereco if all(validarNaoVazio(str(valor)) for valor in endereco.values()) else None
 
-# FUNÇÃO OBTER CÓDIGO DO ENDEREÇO
-def obterCodigoEndereco():
-    while True:
-        codigoEndereco = input("Insira o código do endereço: ")
-        if validarNumero(codigoEndereco):
-            return int(codigoEndereco)
-        else:
-            print("O código do endereço deve ser um número inteiro.")
-            return None
 
 # FUNÇÃO CADASTRAR ENDEREÇOS
 def cadastrarEnderecos():
     enderecos = []
-    count=0
     while True:
-        count+=1
-        endereco = obterEndereco(count)
+        endereco = obterEndereco(len(enderecos))
         if endereco:
             enderecos.append(endereco)
         else:
@@ -60,7 +51,7 @@ def editarEndereco(enderecos):
     for endereco in enderecos:
         if endereco["cod_endereco"] == codigoEndereco:
             achou = True
-            novoEndereco = obterEndereco(codigoEnde3reco)
+            novoEndereco = obterEndereco(codigoEndereco)
             if novoEndereco: endereco = novoEndereco
             else: print("Todos os campos do endereço devem ser preenchidos.")
         novosEnderecos.append(endereco)
@@ -81,42 +72,31 @@ def excluirEndereco(enderecos):
     if not enderecoExcluido: print("o código inserido não foi encontrado.")
     return enderecos
 
-# FORMATAÇÃO JSON USUÁRIO
-def enderecoJson(arquivoJson):
-    if "rua" in arquivoJson and "numero" in arquivoJson and "descricao" in arquivoJson and "bairro" in arquivoJson:
-        print(f'{arquivoJson["rua"]}, {arquivoJson["numero"]} ({arquivoJson["descricao"]}) - {arquivoJson["bairro"]}')
-    if "cidade" in arquivoJson and "estado" in arquivoJson and "pais" in arquivoJson:
-        print(f'{arquivoJson["cidade"]} - {arquivoJson["estado"]} ({arquivoJson["pais"]})')
-    if "cep" in arquivoJson:
-        print(f'CEP: {arquivoJson["cep"]}')
         
 # GERENCIAR ENDEREÇOS:
 def gerenciarEnderecos(enderecos):
-    count = 0
+    enderecos = [*enderecos]
     print("Endereços Atuais:")
-    if not enderecos: print("Nenhum endereço cadastrado!")
+    if len(enderecos) == 0: print("Nenhum endereço cadastrado!")
     else:
         for endereco in enderecos:
-            count+=1
             print("================================")
             print(f'Código Endereço: {endereco["cod_endereco"]}')
             enderecoJson(endereco)
         print("================================")
     print('O que deseja fazer com os endereços?')
     print('1 - Criar um novo endereço')
-    if enderecos:
+    if len(enderecos) != 0:
         print('2 - Editar um endereço existente')
         print('3 - Deletar um endereço existente')
     print('0 - Voltar')
-    opcao = int(input('Insira a opção desejada: '))
-    if opcao == 0:
-        return enderecos
-    elif opcao == 1:
-        return cadastrarEndereco(enderecos, count)
+    opcao = input('Insira a opção desejada: ')
+    if opcao == "0": return enderecos
+    elif opcao == "1": return cadastrarEndereco(enderecos, len(enderecos))
     elif enderecos:
-        if opcao == 2:
+        if opcao == "2":
             return editarEndereco(enderecos)
-        elif opcao == 3:
+        elif opcao == "3":
             return excluirEndereco(enderecos)
     print('Comando incorreto! :(')
     return enderecos
