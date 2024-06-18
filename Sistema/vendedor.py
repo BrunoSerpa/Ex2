@@ -6,13 +6,15 @@ from conexaoMongo import conectar
 vendedores = conectar().Vendedor
 
 # VALIDAÇÕES
-from validacoes import validarNaoVazio, validarCPF, validarEmail, validarTelefone
+from validacoes import validarNaoVazio, validarCNPJ, validarEmail, validarTelefone
 
 # ENDEREÇO
 from endereco import cadastrarEnderecos, gerenciarEnderecos, enderecoJson
 
 # FAVORITO
-from produtos import produtoJson, cadastrarProduto, gerenciarProdutos
+from produtos import cadastrarProduto, gerenciarProdutos
+from busca import buscarProduto, buscaVendedor
+from formatacaoJson import produtoJson, vendedorJson
 
 # FUNÇÃO CADASTRAR
 def cadastrarVendedor():
@@ -25,9 +27,9 @@ def cadastrarVendedor():
             continue
         break
     while True:
-        cpf = input("Insira o CPF do vendedor: ")
-        if not validarCPF(cpf):
-            print("CPF inválido. Deve conter 11 dígitos numéricos.")
+        cnpj = input("Insira o CNPJ do vendedor: ")
+        if not validarCNPJ(cnpj):
+            print("CNPJ inválido. Deve conter 14 dígitos numéricos.")
             continue
         break
     while True:
@@ -44,34 +46,32 @@ def cadastrarVendedor():
         break
     enderecos = cadastrarEnderecos()
     produtos = []
-    novoVendedor = {
+    vendedor = {
         "nome_vendedor": nome,
-        "cpf": cpf,
+        "cnpj": cnpj,
         "email_vendedor": email,
         "telefone_vendedor": telefone,
         "enderecos": enderecos,
         "produtos": produtos
     }
     try:
-        vendedor = vendedores.insert_one(novoVendedor)
-        idVendedor = ObjectId(vendedor.inserted_id)
+        vendedores.insert_one(vendedor)
         print("Vendedor cadastrado com sucesso!")
     except Exception as e:
         print(f"Erro ao cadastrar vendedor: {e}")
     try:
         if input("Deseja cadastrar um produto? (S/N)\n").upper() == "S":
             while True:
-                produto = cadastrarProduto(idVendedor)
+                produto = cadastrarProduto(vendedor)
                 if produto: 
                     produtos.append(produto)
                 if input("Deseja cadastrar mais algum produto? (S/N)\n").upper() == "S":
                     continue
                 break
-            vendedores.update_one({"_id": idVendedor}, {"$set": {"produtos": produtos}})
+            vendedores.update_one({"_id": vendedor["_id"]}, {"$set": {"produtos": produtos}})
             print("Produtos vinculados com sucesso!")
     except Exception as e:
         print(f"Erro ao vincular produtos ao vendedor: {e}")
-
 
 # FUNÇÃO LISTAR
 def listarVendedor():
@@ -83,9 +83,7 @@ def listarVendedor():
             achouVendedor = buscaVendedor(nomeVendedor, 'nome', False)
             if not achouVendedor:
                 if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-            
             break
-            
     else:
         print('Vendedores Existentes:')
         listaVendedores = vendedores.find().sort("nome_vendedor")
@@ -104,17 +102,17 @@ def atualizarVendedor():
     os.system('cls')
     print("Editando vendedor...")
     while True:
-        nomeVendedor = input('Insira o nome do vendedor desejado: ')
-        achouVendedor = buscaVendedor(nomeVendedor, 'nome', True)
+        achouVendedor = buscaVendedor(input('Insira o nome do vendedor desejado: '), 'nome', True)
         if not achouVendedor:
             if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-        while True:
-            idVendedor = input('Insira o id do vendedor desejado: ')
-            vendedor = buscaVendedor(idVendedor, 'id', False)
-            if vendedor == None:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-                else: return
-            break
+        elif not isinstance(achouVendedor, dict):
+            while True:
+                vendedor = buscaVendedor(input('Insira o id do vendedor desejado: '), 'id', False)
+                if vendedor == None:
+                    if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
+                    else: return
+                break
+        else: vendedor = achouVendedor
         break
     while True:
         vendedorJson(vendedor)
@@ -122,7 +120,7 @@ def atualizarVendedor():
         print("Que tipo de dado deseja mudar?")
         print("--------------------------------")
         print("1 - Nome")
-        print("2 - CPF")
+        print("2 - CNPJ")
         print("3 - Email")
         print("4 - Telefone")
         print("5 - Endereços")
@@ -146,9 +144,9 @@ def atualizarVendedor():
             if not validarNaoVazio(nome): print("Nome não pode estar em branco.")
             else: vendedor["nome_vendedor"] = nome
         elif opcao == "2":
-            cpf = input("Insira o novo CPF do vendedor: ")
-            if not validarCPF(cpf): print("CPF inválido. Deve conter 11 dígitos numéricos.")
-            else: vendedor["cpf"] = cpf
+            cnpj = input("Insira o novo CNPJ do vendedor: ")
+            if not validarCNPJ(cnpj): print("CNPJ inválido. Deve conter 11 dígitos numéricos.")
+            else: vendedor["cnpj"] = cnpj
         elif opcao == "3":
             email = input("Insira o email do vendedor: ")
             if not validarEmail(email): print("Email inválido. Certifique-se de que contém '@' e '.'.")
@@ -163,6 +161,26 @@ def atualizarVendedor():
                 vendedor["produtos"] = []
             vendedor["produtos"] = gerenciarProdutos(vendedor["produtos"], idVendedor)
 
+def atualizarProduto(produto, funcao):
+    vendedor = buscaVendedor(produto["idVendedor"], 'id', False)
+    if vendedor:
+        if funcao == "cadastrar":
+            if produtos in vendedor:
+                vendedor["produtos"].append(produto)
+            else:
+                vendedor["produtos"]=[produto]
+        elif funcao == "editar":
+            for produtoVendedor in vendedor["produtos"]:
+                if produtoVendedor["_id"] == produto["_id"]: produtoVendedor = produto
+        else:
+            for produtoVendedor in vendedor["produtos"]:
+                if produtoVendedor["_id"] == produto["_id"]: vendedor["produtos"].remove(produtoVendedor)
+    try:
+        vendedores.update_one({ "_id": vendedor["_id"] },{ "$set": vendedor })
+        print("Vendedor atualizado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao atualizar o vendedor: {e}")
+
 def deletarVendedor():
     while True:
         nomeVendedor = input('Insira o nome do vendedor desejado: ')
@@ -175,76 +193,9 @@ def deletarVendedor():
             if achouVendedor == None:
                 if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
                 else: return
-            
+            if produtos in achouVendedor:
+                for produto in achouVendedor["produtos"]:        
+                    deletarProduto(produto)
             vendedores.delete_one(achouVendedor)
             break    
         break
-# PROCURAR CLIENTE ESPECÍFICO
-def buscaVendedor(dadoProcurado, tipoDado, comCodigo):
-    global vendedores
-    if tipoDado == 'nome':
-        listaVendedores = vendedores.find({"nome_vendedor": dadoProcurado}).sort("nome_vendedor")
-        count = 0
-        primeiroVendedor= None
-        for vendedor in listaVendedores:
-            count+=1
-            if count > 1 and primeiroVendedor==None:
-                vendedorJson(vendedor)                    
-                print("===========================================")
-                if comCodigo and "_id" in vendedor:
-                    print(f'Id: {vendedor["_id"]}') 
-                vendedorJson(vendedor)
-            elif primeiroVendedor != None:
-                print("===========================================")
-                if comCodigo and "_id" in primeiroVendedor:
-                    print(f'Id: {primeiroVendedor["_id"]}') 
-                vendedorJson(primeiroVendedor)
-                print("===========================================")
-                if comCodigo and "_id" in vendedor:
-                    print(f'Id: {vendedor["_id"]}') 
-                primeiroVendedor = None
-            else:
-                primeiroVendedor = vendedor
-        if primeiroVendedor != None:
-            if comCodigo and "_id" in primeiroVendedor:
-                print("===========================================")
-                print(f'Id: {primeiroVendedor["_id"]}') 
-            vendedorJson(primeiroVendedor)
-        elif count == 0:
-            print("Nenhum vendedor encontrado!")
-            return False
-        print("===========================================")
-        return True
-    else:
-        vendedor = vendedores.find_one({"_id": ObjectId(dadoProcurado)})
-        if vendedor:
-            print("Vendedor encontrado!")
-            return vendedor
-        else:
-            print("Nenhum Vendedor encontrado!")
-            return None
-    
-# FORMATAÇÃO JSON CLIENTE
-def vendedorJson(arquivoJson):
-    if "nome_vendedor" in arquivoJson:
-        print(f'Nome: {arquivoJson["nome_vendedor"]}')
-    if "cpf" in arquivoJson:
-        print(f'CPF: {arquivoJson["cpf"]}')
-    if "email_vendedor" in arquivoJson:
-        print(f'Emai: {arquivoJson["email_vendedor"]}')
-    if "telefone_vendedor" in arquivoJson:
-        print(f'Telefone: {arquivoJson["telefone_vendedor"]}')
-    count = 0
-    for endereco in arquivoJson["enderecos"]:
-        count += 1
-        print("-----------------------------------------------")
-        print(f'{count}º Endereco:')
-        enderecoJson(endereco)
-    count1 = 0
-    for produto in arquivoJson["produtos"]:
-        count1 += 1
-        print("-----------------------------------------------")
-        print(f'{count1}º Produto:')
-        produtoJson(produto)
-    if count != 0 or count1 != 0:
-        print("-----------------------------------------------")
