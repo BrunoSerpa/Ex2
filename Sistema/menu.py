@@ -1,5 +1,6 @@
 from usuario import cadastrarUsuario, atualizarUsuario, listarUsuario, deletarUsuario
 from vendedor import cadastrarVendedor, atualizarVendedor, listarVendedor, deletarVendedor
+from produtos import cadastrarProduto, atualizarProduto, listarProduto, deletarProduto
 from validacoes import validarNaoVazio
 import os
 
