@@ -1,5 +1,4 @@
 from pymongo.mongo_client import MongoClient
-from bson.objectid import ObjectId
 import os
 # CONEXÃO COM A COLEÇÃO DE CLIENTE
 from conexaoMongo import conectar
@@ -8,11 +7,16 @@ usuarios = conectar().Usuario
 # VALIDAÇÕES
 from validacoes import validarNaoVazio, validarCPF, validarEmail, validarTelefone
 
+# FORMATAÇÃO
+from formatacaoJson import usuarioJson, enderecoJson, produtoJson
+
+# BUSCAS
+from busca import buscaUsuario
+
 # ENDEREÇO
-from endereco import cadastrarEnderecos, gerenciarEnderecos, enderecoJson
+from endereco import cadastrarEnderecos, gerenciarEnderecos
 # FAVORITO
 from favoritos import gerenciarFavoritos
-from produtos import produtoJson
 
 # FUNÇÃO CADASTRAR
 def cadastrarUsuario():
@@ -70,33 +74,24 @@ def listarUsuario():
             break
     else:
         print('Usuários Existentes:')
-        listaUsuarios = usuarios.find().sort("nome_usuario")
-        count = 0
-        for usuario in listaUsuarios:
-            count += 1
-            print("===========================================")
-            usuarioJson(usuario)
-        if count == 0:
-            print("Nenhum usuário cadastrado!")
-        else:
-            print("===========================================")
+        buscaUsuario('', 'nome', False)
 
 # FUNÇÃO ATUALIZAR
 def atualizarUsuario():
     os.system('cls')
     print("Editando usuário...")
     while True:
-        nomeUsuario = input('Insira o nome do usuário desejado: ')
-        achouUsuario = buscaUsuario(nomeUsuario, 'nome', True)
+        achouUsuario = buscaUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)
         if not achouUsuario:
             if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-        while True:
-            idUsuario = input('Insira o id do usuário desejado: ')
-            usuario = buscaUsuario(idUsuario, 'id', False)
-            if usuario == None:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-                else: return
-            break
+        elif not isinstance(achouUsuario, dict):
+            while True:
+                usuario = buscaUsuario(input('Insira o id do usuário desejado: '), 'id', False)
+                if usuario == None:
+                    if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
+                    else: return
+                break
+        else: usuario = achouUsuario 
         break
     while True:
         usuarioJson(usuario)
@@ -139,70 +134,31 @@ def atualizarUsuario():
             telefone = input("Insira o telefone do usuário: ")
             if not validarTelefone(telefone): print("Telefone inválido. Deve conter apenas dígitos e ter pelo menos 8 caracteres.")
             else: usuario["telefone_usuario"] = telefone
-        elif opcao == "5": usuario["enderecos"] = gerenciarEnderecos(usuario["enderecos"])
+        elif opcao == "5":
+            if not usuario["enderecos"]: usuario["enderecos"] = []
+            usuario["enderecos"] = gerenciarEnderecos(usuario["enderecos"])
         elif opcao == "6":
-            if not usuario["favoritos"]:
-                usuario["favoritos"] = []
+            if not usuario["favoritos"]: usuario["favoritos"] = []
             usuario["favoritos"] = gerenciarFavoritos(usuario["favoritos"])
-
 def deletarUsuario():
     while True:
-        nomeUsuario = input('Insira o nome do usuário desejado: ')
-        achouUsuario = buscaUsuario(nomeUsuario, 'nome', True)
+        achouUsuario = buscaUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)
         if not achouUsuario:
             if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
         while True:
-            idUsuario = input('Insira o id do usuário desejado: ')
-            achouUsuario = buscaUsuario(nomeUsuario, 'id', False)
+            achouUsuario = buscaUsuario(input('Insira o id do usuário desejado: '), 'id', False)
             if achouUsuario == None:
                 if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
                 else: return
-            usuarios.delete_one(achouUsuario)
+            try:
+                usuarios.delete_one(achouUsuario)
+                print("Usuário deletado com sucesso!")
+            except Exception as e:
+                print(f"Erro ao deletar usuário: {e}")
+            break
+            print(" ")
+            break
         break
-# PROCURAR CLIENTE ESPECÍFICO
-def buscaUsuario(dadoProcurado, tipoDado, comCodigo):
-    global usuarios
-    if tipoDado == 'nome':
-        listaUsuarios = usuarios.find({"nome_usuario": dadoProcurado}).sort("nome_usuario")
-        count = 0
-        primeiroUsuario= None
-        for usuario in listaUsuarios:
-            count+=1
-            if count > 1 and primeiroUsuario==None:
-                usuarioJson(usuario)                    
-                print("===========================================")
-                if comCodigo and "_id" in usuario:
-                    print(f'Id: {usuario["_id"]}') 
-                usuarioJson(usuario)
-            elif primeiroUsuario != None:
-                print("===========================================")
-                if comCodigo and "_id" in primeiroUsuario:
-                    print(f'Id: {primeiroUsuario["_id"]}') 
-                usuarioJson(primeiroUsuario)
-                print("===========================================")
-                if comCodigo and "_id" in usuario:
-                    print(f'Id: {usuario["_id"]}') 
-                primeiroUsuario = None
-            else:
-                primeiroUsuario = usuario
-        if primeiroUsuario != None:
-            if comCodigo and "_id" in primeiroUsuario:
-                print("===========================================")
-                print(f'Id: {primeiroUsuario["_id"]}') 
-                usuarioJson(primeiroUsuario)
-        elif count == 0:
-            print("Nenhum usuário encontrado!")
-            return False
-        print("===========================================")
-        return True
-    else:
-        usuario = usuarios.find_one({"_id": ObjectId(dadoProcurado)})
-        if usuario:
-            print("Usuário encontrado!")
-            return usuario
-        else:
-            print("Nenhum Usuário encontrado!")
-            return None
     
 # FORMATAÇÃO JSON CLIENTE
 def usuarioJson(arquivoJson):
@@ -220,13 +176,11 @@ def usuarioJson(arquivoJson):
         print("-----------------------------------------------")
         print(f'{count}º Endereco:')
         enderecoJson(endereco)
-    if count != 0:
-        print("-----------------------------------------------")
-    count = 0
+    count1 = 0
     for favorito in arquivoJson["favoritos"]:
-        count += 1
+        count1 += 1
         print("-----------------------------------------------")
-        print(f'{count}º Favorito:')
-        produtoJson(favorito)
-    if count != 0:
+        print(f'{count1}º Favorito:')
+        produtoJson(favorito, False)
+    if count != 0 or count1 != 0:
         print("-----------------------------------------------")
