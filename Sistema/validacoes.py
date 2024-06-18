@@ -4,6 +4,11 @@ def validarCPF(cpf):
         return False
     return True
 
+def validarCNPJ(cnpj):
+    if len(cnpj) != 14 or not cnpj.isnumeric():
+        return False
+    return True
+
 def validarEmail(email):
     if '@' not in email and '.' not in email:
         return False
@@ -23,3 +28,10 @@ def validarNumero(numero):
     if not numero.isnumeric():
         return False
     return True
+
+def validarFloat(numero):
+    try:
+        float(numero)
+        return True
+    except ValueError:
+        return False
