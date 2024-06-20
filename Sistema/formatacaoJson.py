@@ -6,21 +6,18 @@ def enderecoJson(arquivoJson):
     if "cep" in arquivoJson:
         print(f'CEP: {arquivoJson["cep"]}')
 
-def produtoJson(arquivoJson, comVendedor):
-    if comVendedor:
-        if "nome_vendedor" in arquivoJson:
-            print(f'Vendedor: {arquivoJson["nome_vendedor"]}')
-        if "cnpj_vendedor" in arquivoJson:
-            print(f'CNPJ: {arquivoJson["cnpj"]}')
-    if "nome_produto" in arquivoJson:
-        print(f'Produto: {arquivoJson["nome_produto"]}')
-    if "valor_produto" in arquivoJson:
-        print(f'Valor: R${arquivoJson["valor_produto"]:.2f}')
+def produtoJson(arquivoJson, comCodigo=False, comVendedor=False):
+    if comCodigo and "_id" in arquivoJson: print(f'Id: {arquivoJson["_id"]}')
+    if "nome_produto" in arquivoJson: print(f'Produto: {arquivoJson["nome_produto"]}')
+    if "valor_produto" in arquivoJson: print(f'Valor: R${arquivoJson["valor_produto"]:.2f}')
+    if comVendedor and "nome_vendedor" in arquivoJson: print(f'Vendedor: {arquivoJson["nome_vendedor"]}')
+    if comVendedor and "cnpj" in arquivoJson: print(f'CNPJ: {arquivoJson["cnpj"]}')
 
 def vendedorJson(arquivoJson):
     if "nome_vendedor" in arquivoJson: print(f'Nome: {arquivoJson["nome_vendedor"]}')
-    if "cnpj" in arquivoJson: print(f'CPF: {arquivoJson["cnpj"]}')
-    if "email_vendedor" in arquivoJson: print(f'Emai: {arquivoJson["email_vendedor"]}')
+    if "cnpj" in arquivoJson:
+        print(f'CNPJ: {arquivoJson["cnpj"]}')
+    if "email_vendedor" in arquivoJson: print(f'Email: {arquivoJson["email_vendedor"]}')
     if "telefone_vendedor" in arquivoJson: print(f'Telefone: {arquivoJson["telefone_vendedor"]}')
     if "enderecos" in arquivoJson:
         count = 0
@@ -30,41 +27,57 @@ def vendedorJson(arquivoJson):
             print(f'{count}º Endereco:')
             enderecoJson(endereco)
     if "produtos" in arquivoJson:
-        count1 = 0
+        count = 0
         for produto in arquivoJson["produtos"]:
-            count1 += 1
+            count += 1
             print("-----------------------------------------------")
-            print(f'{count1}º Produto:')
+            print(f'{count}º Produto:')
             produtoJson(produto, False)
-    if count != 0 or count1 != 0: print("-----------------------------------------------")
+    if "vendas" in arquivoJson:
+        count = 0
+        for venda in arquivoJson["vendas"]:
+            count += 1
+            print("-----------------------------------------------")
+            print(f'{count}º Venda:')
+            comprasJson(venda, False, True)
+    if "enderecos" in arquivoJson or "produtos" in arquivoJson or "vendas" in arquivoJson: print("-----------------------------------------------")
 
-def usuarioJson(arquivoJson):
+
+def usuarioJson(arquivoJson, comCodigo=False):
+    if comCodigo and "_id" in arquivoJson: print(f'Id: {arquivoJson["_id"]}')
     if "nome_usuario" in arquivoJson: print(f'Nome: {arquivoJson["nome_usuario"]}')
     if "cpf" in arquivoJson: print(f'CPF: {arquivoJson["cpf"]}')
-    if "email_usuario" in arquivoJson: print(f'Emai: {arquivoJson["email_usuario"]}')
+    if "email_usuario" in arquivoJson: print(f'Email: {arquivoJson["email_usuario"]}')
     if "telefone_usuario" in arquivoJson: print(f'Telefone: {arquivoJson["telefone_usuario"]}')
     if "enderecos" in arquivoJson:
         count = 0
         for endereco in arquivoJson["enderecos"]:
             count += 1
             print("-----------------------------------------------")
-            print(f'{count}º Endereco:')
+            print(f'{count}º Endereço:')
             enderecoJson(endereco)
     if "favoritos" in arquivoJson:
         count1 = 0
         for produto in arquivoJson["favoritos"]:
             count1 += 1
             print("-----------------------------------------------")
-            print(f'{count1}º produto favorito:')
+            print(f'{count1}º Produto Favorito:')
             produtoJson(produto, True)
-    if count != 0 or count1 != 0: print("-----------------------------------------------")
-    
+    if "compras" in arquivoJson:
+        count2 = 0
+        for compra in arquivoJson["compras"]:
+            count2 += 1
+            print("-----------------------------------------------")
+            print(f'{count2}º Compra:')
+            comprasJson(compra, True, False)
+    if "enderecos" in arquivoJson or "favoritos" in arquivoJson: print("-----------------------------------------------")
+        
 def comprasJson(arquivoJson, comCliente, comVendedor):
     if comCliente:
         if "nome_usuario" in arquivoJson: print(f'Nome: {arquivoJson["nome_usuario"]}')
         if "cpf" in arquivoJson: print(f'Nome: {arquivoJson["cpf"]}')
         if "endereco_usuario" in arquivoJson:
-            print("Endereco Usuário:")
+            print("Endereços do usuário:")
             enderecoJson(arquivoJson["endereco_cliente"])
     if comVendedor:
         if "nome_vendedor" in arquivoJson: print(f'Nome: {arquivoJson["nome_vendedor"]}')
@@ -84,7 +97,18 @@ def comprasJson(arquivoJson, comCliente, comVendedor):
             print("-----------------------------------------------")
             produtoJson(produto)
         print("-----------------------------------------------")
-    if "promocao" in arquivoJson:
-        print(f'Valor promoção: {arquivoJson["promocao"]}')
-    if "valor_total" in arquivoJson:
-        print(f'Valor total: {arquivoJson["valor_total"]}')
+    if "valor_total" in arquivoJson: print(f'Valor total: R${arquivoJson["valor_total"]:.2f}')
+    
+def formatar_telefone(telefone):
+    if len(telefone) == 10: return f'({telefone[0:2]}) {telefone[2:6]}-{telefone[6:10]}'
+    if len(telefone) == 11: return f'({telefone[0:2]}) {telefone[2:7]}-{telefone[7:11]}'
+    else: return telefone
+
+def formatar_cpf(cpf):
+    if len(cpf) == 11: return f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:11]}'
+    else: return cpf
+    
+def formatar_cnpj(cnpj):
+    if len(cnpj) == 14: return f'{cnpj[0:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:14]}'
+    else: return cnpj
+
