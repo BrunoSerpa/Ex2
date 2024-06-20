@@ -4,146 +4,78 @@ from produtos import cadastrarProduto, atualizarProduto, listarProduto, deletarP
 from validacoes import validarNaoVazio
 import os
 
-def menuUsuario():
+def exibirMenu(opcoes, titulo="Menu"):
     while True:
         print("================================")
-        print("O que deseja fazer?")
+        print(f"{titulo}")
         print("--------------------------------")
-        print("1 - Cadastar usuario")
-        print("2 - Listar usuarios")
-        print("3 - Atualizar usuario")
-        print("4 - Deletar usuario")
+        for i, opcao in enumerate(opcoes, start=1):
+            print(f"{i} - {opcao['descricao']}")
         print("--------------------------------")
-        print("0 - Voltar para menu")
+        print("0 - Voltar")
         print("================================")
-        opcao=input("Insira uma opção: ")
-        os.system('cls')
+        opcao = input("Insira uma opção: ")
+        
         if not validarNaoVazio(opcao):
+            os.system('cls')
             print("Insira uma das opções!")
             continue
+
         if opcao == "0":
             break
-        elif opcao == "1":
-            cadastrarUsuario()
-        elif opcao == "2":
-            listarUsuario()
-        elif opcao == "3":
-            atualizarUsuario()
-        elif opcao == "4":
-            deletarUsuario()
-        else:
+
+        try:
+            opcaoIndex = int(opcao) - 1
+            if 0 <= opcaoIndex < len(opcoes):
+                os.system('cls')
+                opcoes[opcaoIndex]['acao']()
+            else:
+                print("Opção inválida!")
+        except ValueError:
             print("Opção inválida!")
+
+def menuUsuario():
+    opcoes = [
+        {"descricao": "Cadastar usuario", "acao": cadastrarUsuario},
+        {"descricao": "Listar usuarios", "acao": listarUsuario},
+        {"descricao": "Atualizar usuario", "acao": atualizarUsuario},
+        {"descricao": "Deletar usuario", "acao": deletarUsuario}
+    ]
+    exibirMenu(opcoes, "Gerenciar Usuários")
 
 def menuVendedor():
-    while True:
-        print("================================")
-        print("O que deseja fazer?")
-        print("--------------------------------")
-        print("1 - Cadastar vendedor")
-        print("2 - Listar vendedores")
-        print("3 - Atualizar vendedor")
-        print("4 - Deletar vendedor")
-        print("--------------------------------")
-        print("0 - Voltar para menu")
-        print("================================")
-        opcao=input("Insira uma opção: ")
-        os.system('cls')
-        if not validarNaoVazio(opcao):
-            print("Insira uma das opções!")
-            continue
-        if opcao == "0":
-            break
-        elif opcao == "1":
-            cadastrarVendedor()
-        elif opcao == "2":
-            listarVendedor()
-        elif opcao == "3":
-            atualizarVendedor()
-        elif opcao == "4":
-            deletarVendedor()
-        else:
-            print("Opção inválida!")
+    opcoes = [
+        {"descricao": "Cadastar vendedor", "acao": cadastrarVendedor},
+        {"descricao": "Listar vendedores", "acao": listarVendedor},
+        {"descricao": "Atualizar vendedor", "acao": atualizarVendedor},
+        {"descricao": "Deletar vendedor", "acao": deletarVendedor}
+    ]
+    exibirMenu(opcoes, "Gerenciar Vendedores")
 
 def menuProduto():
-    while True:
-        print("================================")
-        print("O que deseja fazer?")
-        print("--------------------------------")
-        print("1 - Cadastar produto")
-        print("2 - Listar produtos")
-        print("3 - Atualizar produto")
-        print("4 - Deletar produto")
-        print("--------------------------------")
-        print("0 - Voltar para menu")
-        print("================================")
-        opcao=input("Insira uma opção: ")
-        os.system('cls')
-        if not validarNaoVazio(opcao):
-            print("Insira uma das opções!")
-            continue
-        if opcao == "0":
-            break
-        elif opcao == "1":
-            cadastrarProduto()
-        elif opcao == "2":
-            listarProduto()
-        elif opcao == "3":
-            atualizarProduto()
-        elif opcao == "4":
-            deletarProduto()
-        else:
-            print("Opção inválida!")
+    opcoes = [
+        {"descricao": "Cadastar produto", "acao": cadastrarProduto},
+        {"descricao": "Listar produtos", "acao": listarProduto},
+        {"descricao": "Atualizar produto", "acao": atualizarProduto},
+        {"descricao": "Deletar produto", "acao": deletarProduto}
+    ]
+    exibirMenu(opcoes, "Gerenciar Produtos")
 
 def menuCompra():
-    while True:
-        print("================================")
-        print("O que deseja fazer?")
-        print("--------------------------------")
-        print("1 - Cadastar compra")
-        print("2 - Listar compras")
-        print("--------------------------------")
-        print("0 - Voltar para menu")
-        print("================================")
-        opcao=input("Insira uma opção: ")
-        os.system('cls')
-        if not validarNaoVazio(opcao):
-            print("Insira uma das opções!")
-            continue
-        if opcao == "0":
-            break
-        elif opcao == "1":
-            cadastrarCompra()
-        elif opcao == "2":
-            listarCompras()
-        else:
-            print("Opção inválida!")
+    opcoes = [
+        {"descricao": "Cadastar compra", "acao": cadastrarCompra},
+        {"descricao": "Listar compras", "acao": listarCompras}
+    ]
+    exibirMenu(opcoes, "Gerenciar Compras")
 
-def Home():
-    while True:        
-        print("================================")
-        print("O que deseja fazer?")
-        print("--------------------------------")
-        print("1 - Gerenciar Usuarios")
-        print("2 - Gerenciar Vendedores")
-        print("3 - Gerenciar Produtos")
-        print("4 - Gerenciar Compras")
-        print("--------------------------------")
-        print("0 - Sair")
-        print("================================")
-        opcao=input("Insira uma opção: ")
-        os.system('cls')
-        if not validarNaoVazio(opcao):
-            print("Insira uma das opções!")
-            continue
-        if opcao == "0":
-            break
-        elif opcao == "1":
-            menuUsuario()
-        elif opcao == "2":
-            menuVendedor()
-        elif opcao == "3":
-            menuProduto()
-        elif opcao == "4":
-            menuCompra()
-        else:
-            print("Opção inválida!")
+def home():
+    opcoes = [
+        {"descricao": "Gerenciar Usuarios", "acao": menuUsuario},
+        {"descricao": "Gerenciar Vendedores", "acao": menuVendedor},
+        {"descricao": "Gerenciar Produtos", "acao": menuProduto},
+        {"descricao": "Gerenciar Compras", "acao": menuCompra}
+    ]
+    exibirMenu(opcoes, "Menu Principal")
+
+if __name__ == "__main__":
+    home()
