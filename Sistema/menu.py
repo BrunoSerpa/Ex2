@@ -9,31 +9,23 @@ def exibirMenu(opcoes, titulo="Menu"):
         print("================================")
         print(f"{titulo}")
         print("--------------------------------")
-        for i, opcao in enumerate(opcoes, start=1):
-            print(f"{i} - {opcao['descricao']}")
+        for i, opcao in enumerate(opcoes, start=1): print(f"{i} - {opcao['descricao']}")
         print("--------------------------------")
         print("0 - Voltar")
         print("================================")
         opcao = input("Insira uma opção: ")
-        
         if not validarNaoVazio(opcao):
             os.system('cls')
             print("Insira uma das opções!")
             continue
-
-        if opcao == "0":
-            break
-
+        if opcao == "0": break
         try:
             opcaoIndex = int(opcao) - 1
             if 0 <= opcaoIndex < len(opcoes):
                 os.system('cls')
                 opcoes[opcaoIndex]['acao']()
-            else:
-                print("Opção inválida!")
-        except ValueError:
-            print("Opção inválida!")
-
+            else: print("Opção inválida!")
+        except ValueError: print("Opção inválida!")
 def menuUsuario():
     opcoes = [
         {"descricao": "Cadastar usuario", "acao": cadastrarUsuario},
@@ -77,5 +69,4 @@ def home():
     ]
     exibirMenu(opcoes, "Menu Principal")
 
-if __name__ == "__main__":
-    home()
+if __name__ == "__main__": home()

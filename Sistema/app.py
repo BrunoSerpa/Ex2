@@ -1,5 +1,5 @@
-from menu import Home
+from menu import home
 
 print("Bem-vindo ao mercado-livre 2.0")
-Home()
+home()
 print("Volte Sempre!!")
