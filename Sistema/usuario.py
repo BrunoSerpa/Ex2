@@ -1,51 +1,26 @@
 from pymongo.mongo_client import MongoClient
 import os
-# CONEXÃO COM A COLEÇÃO DE CLIENTE
 from conexaoMongo import conectar
+from validacoes import validarNaoVazio, validarCPF, validarEmail, validarTelefone
+from formatacaoJson import usuarioJson, enderecoJson, produtoJson
+from busca import buscarUsuario
+from endereco import cadastrarEnderecos, gerenciarEnderecos
+from favoritos import gerenciarFavoritos
 usuarios = conectar().Usuario
 
-# VALIDAÇÕES
-from validacoes import validarNaoVazio, validarCPF, validarEmail, validarTelefone
+def obterEntrada(mensagem, validacao, erroMensagem):
+    while True:
+        entrada = input(mensagem)
+        if not validacao(entrada): print(erroMensagem)
+        else: return entrada
 
-# FORMATAÇÃO
-from formatacaoJson import usuarioJson, enderecoJson, produtoJson
-
-# BUSCAS
-from busca import buscaUsuario
-
-# ENDEREÇO
-from endereco import cadastrarEnderecos, gerenciarEnderecos
-# FAVORITO
-from favoritos import gerenciarFavoritos
-
-# FUNÇÃO CADASTRAR
 def cadastrarUsuario():
     os.system('cls')
-    print("Cadastrando um usuário...")
-    while True:
-        nome = input("Insira o nome do usuário: ")
-        if not validarNaoVazio(nome):
-            print("Nome não pode estar em branco.")
-            continue
-        break
-    while True:
-        cpf = input("Insira o CPF do usuário: ")
-        if not validarCPF(cpf):
-            print("CPF inválido. Deve conter 11 dígitos numéricos.")
-            continue
-        break
-    while True:
-        email = input("Insira o email do usuário: ")
-        if not validarEmail(email):
-            print("Email inválido. Certifique-se de que contém '@' e '.'.")
-            continue
-        break
-    while True:
-        telefone = input("Insira o telefone do usuário: ")
-        if not validarTelefone(telefone):
-            print("Telefone inválido. Deve conter apenas dígitos numéricos e ter pelo menos 8 caracteres.")
-            continue
-        break
+    print("Cadastrando um usuário...")    
+    nome = obterEntrada("Insira o nome do usuário: ", validarNaoVazio, "Nome não pode estar em branco.")
+    cpf = obterEntrada("Insira o CPF do usuário: ", validarCPF, "CPF inválido. Deve conter 11 dígitos numéricos.")
+    email = obterEntrada("Insira o email do usuário: ", validarEmail, "Email inválido. Certifique-se de que contém '@' e '.'.")
+    telefone = obterEntrada("Insira o telefone do usuário: ", validarTelefone, "Telefone inválido. Deve conter apenas dígitos numéricos e ter pelo menos 8 caracteres.")
     enderecos = cadastrarEnderecos()
     novoUsuario = {
         "nome_usuario": nome,
@@ -53,46 +28,43 @@ def cadastrarUsuario():
         "email_usuario": email,
         "telefone_usuario": telefone,
         "enderecos": enderecos,
-        "favoritos": []
+        "favoritos": [],
+        "compras": []
     }
     try:
         usuarios.insert_one(novoUsuario)
         print("Usuário cadastrado com sucesso!")
     except Exception as e:
         print(f"Erro ao cadastrar usuário: {e}")
+        input("Insira qualquer coisa para continuar...")
 
-# FUNÇÃO LISTAR
 def listarUsuario():
     os.system('cls')
     print("Listando usuários...")
     if input("Deseja procurar um usuário específico? (S/N)\n").upper() == 'S':
         while True:
             nomeUsuario = input('Insira o nome do usuário desejado: ')
-            achouUsuario = buscaUsuario(nomeUsuario, 'nome', False)
+            achouUsuario = buscarUsuario(nomeUsuario, 'nome', False)
             if not achouUsuario:
                 if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
             break
     else:
         print('Usuários Existentes:')
-        buscaUsuario('', 'nome', False)
+        buscarUsuario('', 'nome', False)
 
-# FUNÇÃO ATUALIZAR
 def atualizarUsuario():
     os.system('cls')
     print("Editando usuário...")
-    while True:
-        achouUsuario = buscaUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)
+    usuario = None
+    while not usuario:
+        achouUsuario = buscarUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)
         if not achouUsuario:
-            if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
+            if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
         elif not isinstance(achouUsuario, dict):
-            while True:
-                usuario = buscaUsuario(input('Insira o id do usuário desejado: '), 'id', False)
-                if usuario == None:
-                    if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-                    else: return
-                break
-        else: usuario = achouUsuario 
-        break
+            usuario = buscarUsuario(input('Insira o id do usuário desejado: '), 'id', False)
+            if not usuario:
+                if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
+        else: usuario = achouUsuario
     while True:
         usuarioJson(usuario)
         print("================================")
@@ -107,80 +79,44 @@ def atualizarUsuario():
         print("--------------------------------")
         print("0 - Salvar e sair")
         print("================================")
-        opcao=input("Insira uma opção: ")
+        opcao = input("Insira uma opção: ")
         if not validarNaoVazio(opcao):
             print("Insira uma das opções!")
             continue
         if opcao == "0":
             try:
-                usuarios.update_one({ "_id": usuario["_id"] },{ "$set": usuario })
-                print("Usuário cadastrado com sucesso!")
+                usuarios.update_one({"_id": usuario["_id"]}, {"$set": usuario})
+                print("Usuário atualizado com sucesso!")
             except Exception as e:
                 print(f"Erro ao editar usuário: {e}")
+                input("Insira qualquer coisa para continuar...")
             break
         elif opcao == "1":
-            nome = input("Insira o novo nome do usuário: ")
-            if not validarNaoVazio(nome): print("Nome não pode estar em branco.")
-            else: usuario["nome_usuario"] = nome
+            usuario["nome_usuario"] = obterEntrada("Insira o novo nome do usuário: ", validarNaoVazio, "Nome não pode estar em branco.")
         elif opcao == "2":
-            cpf = input("Insira o novo CPF do usuário: ")
-            if not validarCPF(cpf): print("CPF inválido. Deve conter 11 dígitos numéricos.")
-            else: usuario["cpf"] = cpf
+            usuario["cpf"] = obterEntrada("Insira o novo CPF do usuário: ", validarCPF, "CPF inválido. Deve conter 11 dígitos numéricos.")
         elif opcao == "3":
-            email = input("Insira o email do usuário: ")
-            if not validarEmail(email): print("Email inválido. Certifique-se de que contém '@' e '.'.")
-            else: usuario["email_usuario"]= email
+            usuario["email_usuario"] = obterEntrada("Insira o email do usuário: ", validarEmail, "Email inválido. Certifique-se de que contém '@' e '.'.")
         elif opcao == "4":
-            telefone = input("Insira o telefone do usuário: ")
-            if not validarTelefone(telefone): print("Telefone inválido. Deve conter apenas dígitos e ter pelo menos 8 caracteres.")
-            else: usuario["telefone_usuario"] = telefone
+            usuario["telefone_usuario"] = obterEntrada("Insira o telefone do usuário: ", validarTelefone, "Telefone inválido. Deve conter apenas dígitos numéricos e ter pelo menos 8 caracteres.")
         elif opcao == "5":
-            if not usuario["enderecos"]: usuario["enderecos"] = []
-            usuario["enderecos"] = gerenciarEnderecos(usuario["enderecos"])
+            usuario["enderecos"] = gerenciarEnderecos(usuario.get("enderecos", []))
         elif opcao == "6":
-            if not usuario["favoritos"]: usuario["favoritos"] = []
-            usuario["favoritos"] = gerenciarFavoritos(usuario["favoritos"])
+            usuario["favoritos"] = gerenciarFavoritos(usuario.get("favoritos", []))
+
 def deletarUsuario():
     while True:
-        achouUsuario = buscaUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)
+        achouUsuario = buscarUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)
         if not achouUsuario:
-            if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-        while True:
-            achouUsuario = buscaUsuario(input('Insira o id do usuário desejado: '), 'id', False)
-            if achouUsuario == None:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-                else: return
-            try:
-                usuarios.delete_one(achouUsuario)
-                print("Usuário deletado com sucesso!")
-            except Exception as e:
-                print(f"Erro ao deletar usuário: {e}")
-            break
-            print(" ")
-            break
+            if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue    
+            usuario = buscarUsuario(input('Insira o id do usuário desejado: '), 'id', False)
+            if not usuario:
+                if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
+        else: usuario = achouUsuario
         break
-    
-# FORMATAÇÃO JSON CLIENTE
-def usuarioJson(arquivoJson):
-    if "nome_usuario" in arquivoJson:
-        print(f'Nome: {arquivoJson["nome_usuario"]}')
-    if "cpf" in arquivoJson:
-        print(f'CPF: {arquivoJson["cpf"]}')
-    if "email_usuario" in arquivoJson:
-        print(f'Emai: {arquivoJson["email_usuario"]}')
-    if "telefone_usuario" in arquivoJson:
-        print(f'Telefone: {arquivoJson["telefone_usuario"]}')
-    count = 0
-    for endereco in arquivoJson["enderecos"]:
-        count += 1
-        print("-----------------------------------------------")
-        print(f'{count}º Endereco:')
-        enderecoJson(endereco)
-    count1 = 0
-    for favorito in arquivoJson["favoritos"]:
-        count1 += 1
-        print("-----------------------------------------------")
-        print(f'{count1}º Favorito:')
-        produtoJson(favorito, False)
-    if count != 0 or count1 != 0:
-        print("-----------------------------------------------")
+    try:
+        usuarios.delete_one(usuario)
+        print("Usuário deletado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao deletar usuário: {e}")
+        input("Insira qualquer coisa para continuar...")
