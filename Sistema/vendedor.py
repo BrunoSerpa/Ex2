@@ -1,119 +1,75 @@
 from pymongo.mongo_client import MongoClient
-from bson.objectid import ObjectId
 import os
-# CONEXÃO COM A COLEÇÃO DE CLIENTE
 from conexaoMongo import conectar
+from validacoes import validarNaoVazio, validarCNPJ, validarEmail, validarTelefone
+from formatacaoJson import vendedorJson, enderecoJson, produtoJson
+from busca import buscarVendedor
+from endereco import cadastrarEnderecos, gerenciarEnderecos
+from produtos import cadastrarProduto, gerenciarProdutos, deletarProduto
 vendedores = conectar().Vendedor
 
-# VALIDAÇÕES
-from validacoes import validarNaoVazio, validarCNPJ, validarEmail, validarTelefone
+def obterEntrada(mensagem, validacao, erroMensagem):
+    while True:
+        entrada = input(mensagem)
+        if not validacao(entrada): print(erroMensagem)
+        else: return entrada
 
-# ENDEREÇO
-from endereco import cadastrarEnderecos, gerenciarEnderecos, enderecoJson
-
-# FAVORITO
-from produtos import cadastrarProduto, gerenciarProdutos
-from busca import buscarProduto, buscaVendedor
-from formatacaoJson import produtoJson, vendedorJson
-
-# FUNÇÃO CADASTRAR
 def cadastrarVendedor():
     os.system('cls')
     print("Cadastrando um vendedor...")
-    while True:
-        nome = input("Insira o nome do vendedor: ")
-        if not validarNaoVazio(nome):
-            print("Nome não pode estar em branco.")
-            continue
-        break
-    while True:
-        cnpj = input("Insira o CNPJ do vendedor: ")
-        if not validarCNPJ(cnpj):
-            print("CNPJ inválido. Deve conter 14 dígitos numéricos.")
-            continue
-        break
-    while True:
-        email = input("Insira o email do vendedor: ")
-        if not validarEmail(email):
-            print("Email inválido. Certifique-se de que contém '@' e '.'.")
-            continue
-        break
-    while True:
-        telefone = input("Insira o telefone do vendedor: ")
-        if not validarTelefone(telefone):
-            print("Telefone inválido. Deve conter apenas dígitos numéricos e ter pelo menos 8 caracteres.")
-            continue
-        break
+    nome = obterEntrada("Insira o nome do vendedor: ", validarNaoVazio, "Nome não pode estar em branco.")
+    cnpj = obterEntrada("Insira o CNPJ do vendedor: ", validarCNPJ, "CNPJ inválido. Deve conter 14 dígitos numéricos.")
+    email = obterEntrada("Insira o email do vendedor: ", validarEmail, "Email inválido. Certifique-se de que contém '@' e '.'.")
+    telefone = obterEntrada("Insira o telefone do vendedor: ", validarTelefone, "Telefone inválido. Deve conter apenas dígitos numéricos e ter pelo menos 8 caracteres.")
     enderecos = cadastrarEnderecos()
     produtos = []
+    while True:
+        if input("Deseja cadastrar um produto? (S/N)\n").upper() != "S": break
+        produto = cadastrarProduto()
+        if produto: produtos.append(produto)
     vendedor = {
         "nome_vendedor": nome,
         "cnpj": cnpj,
         "email_vendedor": email,
         "telefone_vendedor": telefone,
         "enderecos": enderecos,
-        "produtos": produtos
+        "produtos": produtos,
+        "vendas": []
     }
     try:
         vendedores.insert_one(vendedor)
         print("Vendedor cadastrado com sucesso!")
-    except Exception as e:
+    except Exception as e: 
         print(f"Erro ao cadastrar vendedor: {e}")
-    try:
-        if input("Deseja cadastrar um produto? (S/N)\n").upper() == "S":
-            while True:
-                produto = cadastrarProduto(vendedor)
-                if produto: 
-                    produtos.append(produto)
-                if input("Deseja cadastrar mais algum produto? (S/N)\n").upper() == "S":
-                    continue
-                break
-            vendedores.update_one({"_id": vendedor["_id"]}, {"$set": {"produtos": produtos}})
-            print("Produtos vinculados com sucesso!")
-    except Exception as e:
-        print(f"Erro ao vincular produtos ao vendedor: {e}")
+        input("Insira qualquer coisa para continuar...")
 
-# FUNÇÃO LISTAR
 def listarVendedor():
     os.system('cls')
     print("Listando vendedores...")
     if input("Deseja procurar um vendedor específico? (S/N)\n").upper() == 'S':
         while True:
             nomeVendedor = input('Insira o nome do vendedor desejado: ')
-            achouVendedor = buscaVendedor(nomeVendedor, 'nome', False)
+            achouVendedor = buscarVendedor(nomeVendedor, 'nome', False)
             if not achouVendedor:
                 if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
             break
     else:
         print('Vendedores Existentes:')
-        listaVendedores = vendedores.find().sort("nome_vendedor")
-        count = 0
-        for vendedor in listaVendedores:
-            count += 1
-            print("===========================================")
-            vendedorJson(vendedor)
-        if count == 0:
-            print("Nenhum vendedor cadastrado!")
-        else:
-            print("===========================================")
+        buscarVendedor('', 'nome', False)
 
-# FUNÇÃO ATUALIZAR
 def atualizarVendedor():
     os.system('cls')
     print("Editando vendedor...")
-    while True:
-        achouVendedor = buscaVendedor(input('Insira o nome do vendedor desejado: '), 'nome', True)
+    vendedor = None
+    while not vendedor:
+        achouVendedor = buscarVendedor(input('Insira o nome do vendedor desejado: '), 'nome', True)
         if not achouVendedor:
-            if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
+            if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
         elif not isinstance(achouVendedor, dict):
-            while True:
-                vendedor = buscaVendedor(input('Insira o id do vendedor desejado: '), 'id', False)
-                if vendedor == None:
-                    if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-                    else: return
-                break
+            vendedor = buscarVendedor(input('Insira o id do vendedor desejado: '), 'id', False)
+            if not vendedor:
+                if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
         else: vendedor = achouVendedor
-        break
     while True:
         vendedorJson(vendedor)
         print("================================")
@@ -128,74 +84,59 @@ def atualizarVendedor():
         print("--------------------------------")
         print("0 - Salvar e sair")
         print("================================")
-        opcao=input("Insira uma opção: ")
+        opcao = input("Insira uma opção: ")
         if not validarNaoVazio(opcao):
             print("Insira uma das opções!")
             continue
         if opcao == "0":
             try:
-                vendedores.update_one({ "_id": vendedor["_id"] },{ "$set": vendedor })
-                print("Vendedor atualizado com sucesso!")
+                vendedores.update_one({"_id": vendedor["_id"]}, {"$set": vendedor})
             except Exception as e:
                 print(f"Erro ao atualizar o vendedor: {e}")
+                input("Insira qualquer coisa para continuar...")
+            if "produtos" in vendedor:
+                produtos = conectar().Produto
+                for produto in vendedor["produtos"]:
+                    try:
+                        produto["nome_vendedor"] = vendedor["nome_vendedor"]
+                        produtos.update_one({"_id": produto["_id"]}, {"$set": produto})
+                    except Exception as e:
+                        print(f"Erro ao atualizar o produto: {e}")
+                        input("Insira qualquer coisa para continuar...")
+                print("Vendedor e seus produtos atualizados com sucesso!")
+            else: print("Vendedor atualizado com sucesso!")
             break
         elif opcao == "1":
-            nome = input("Insira o novo nome do vendedor: ")
-            if not validarNaoVazio(nome): print("Nome não pode estar em branco.")
-            else: vendedor["nome_vendedor"] = nome
+            vendedor["nome_vendedor"] = obterEntrada("Insira o novo nome do vendedor: ", validarNaoVazio, "Nome não pode estar em branco.")
         elif opcao == "2":
-            cnpj = input("Insira o novo CNPJ do vendedor: ")
-            if not validarCNPJ(cnpj): print("CNPJ inválido. Deve conter 11 dígitos numéricos.")
-            else: vendedor["cnpj"] = cnpj
+            vendedor["cnpj"] = obterEntrada("Insira o novo CNPJ do vendedor: ", validarCNPJVendedor, "CNPJ inválido. Deve conter 14 dígitos numéricos.")
         elif opcao == "3":
-            email = input("Insira o email do vendedor: ")
-            if not validarEmail(email): print("Email inválido. Certifique-se de que contém '@' e '.'.")
-            else: vendedor["email_vendedor"]= email
+            vendedor["email_vendedor"] = obterEntrada("Insira o email do vendedor: ", validarEmail, "Email inválido. Certifique-se de que contém '@' e '.'.")
         elif opcao == "4":
-            telefone = input("Insira o telefone do vendedor: ")
-            if not validarTelefone(telefone): print("Telefone inválido. Deve conter apenas dígitos e ter pelo menos 8 caracteres.")
-            else: vendedor["telefone_vendedor"] = telefone
-        elif opcao == "5": vendedor["enderecos"] = gerenciarEnderecos(vendedor["enderecos"])
+            vendedor["telefone_vendedor"] = obterEntrada("Insira o telefone do vendedor: ", validarTelefone, "Telefone inválido. Deve conter apenas dígitos numéricos e ter pelo menos 8 caracteres.")
+        elif opcao == "5":
+            vendedor["enderecos"] = gerenciarEnderecos(vendedor.get("enderecos", []))
         elif opcao == "6":
-            if not vendedor["produtos"]:
-                vendedor["produtos"] = []
-            vendedor["produtos"] = gerenciarProdutos(vendedor["produtos"], idVendedor)
-
-def atualizarProduto(produto, funcao):
-    vendedor = buscaVendedor(produto["idVendedor"], 'id', False)
-    if vendedor:
-        if funcao == "cadastrar":
-            if produtos in vendedor:
-                vendedor["produtos"].append(produto)
-            else:
-                vendedor["produtos"]=[produto]
-        elif funcao == "editar":
-            for produtoVendedor in vendedor["produtos"]:
-                if produtoVendedor["_id"] == produto["_id"]: produtoVendedor = produto
-        else:
-            for produtoVendedor in vendedor["produtos"]:
-                if produtoVendedor["_id"] == produto["_id"]: vendedor["produtos"].remove(produtoVendedor)
-    try:
-        vendedores.update_one({ "_id": vendedor["_id"] },{ "$set": vendedor })
-        print("Vendedor atualizado com sucesso!")
-    except Exception as e:
-        print(f"Erro ao atualizar o vendedor: {e}")
+            vendedor["produtos"] = gerenciarProdutos(vendedor.get("produtos", []), vendedor["_id"])
 
 def deletarVendedor():
-    while True:
-        nomeVendedor = input('Insira o nome do vendedor desejado: ')
-        achouVendedor = buscaVendedor(nomeVendedor, 'nome', True)
+    os.system('cls')
+    print("Deletando vendedor...")
+    vendedor = None
+    while not vendedor:
+        achouVendedor = buscarVendedor(input('Insira o nome do vendedor desejado: '), 'nome', True)
         if not achouVendedor:
-            if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-        while True:
-            idVendedor = input('Insira o id do vendedor desejado: ')
-            achouVendedor = buscaVendedor(idVendedor, 'id', False)
-            if achouVendedor == None:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-                else: return
-            if produtos in achouVendedor:
-                for produto in achouVendedor["produtos"]:        
-                    deletarProduto(produto)
-            vendedores.delete_one(achouVendedor)
-            break    
-        break
+            if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
+        elif not isinstance(achouVendedor, dict):
+            vendedor = buscarVendedor(input('Insira o id do vendedor desejado: '), 'id', False)
+            if not vendedor:
+                if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
+        else: vendedor = achouVendedor
+    try:
+        if "produtos" in vendedor:
+            for produto in vendedor["produtos"]: deletarProduto(produto)
+        vendedores.delete_one({"_id": vendedor["_id"]})
+        print("Vendedor deletado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao deletar o vendedor: {e}")
+        input("Insira qualquer coisa para continuar...")
