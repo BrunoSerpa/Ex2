@@ -89,11 +89,6 @@ def atualizarVendedor():
             print("Insira uma das opções!")
             continue
         if opcao == "0":
-            try:
-                vendedores.update_one({"_id": vendedor["_id"]}, {"$set": vendedor})
-            except Exception as e:
-                print(f"Erro ao atualizar o vendedor: {e}")
-                input("Insira qualquer coisa para continuar...")
             if "produtos" in vendedor:
                 produtos = conectar().Produto
                 for produto in vendedor["produtos"]:
@@ -103,13 +98,19 @@ def atualizarVendedor():
                     except Exception as e:
                         print(f"Erro ao atualizar o produto: {e}")
                         input("Insira qualquer coisa para continuar...")
-                print("Vendedor e seus produtos atualizados com sucesso!")
-            else: print("Vendedor atualizado com sucesso!")
+                resposta = "Vendedor e seus produtos atualizados com sucesso!"
+            else: resposta = "Vendedor atualizado com sucesso!"
+            try:
+                vendedores.update_one({"_id": vendedor["_id"]}, {"$set": vendedor})
+            except Exception as e:
+                print(f"Erro ao atualizar o vendedor: {e}")
+                input("Insira qualquer coisa para continuar...")
+            print(resposta)
             break
         elif opcao == "1":
             vendedor["nome_vendedor"] = obterEntrada("Insira o novo nome do vendedor: ", validarNaoVazio, "Nome não pode estar em branco.")
         elif opcao == "2":
-            vendedor["cnpj"] = obterEntrada("Insira o novo CNPJ do vendedor: ", validarCNPJVendedor, "CNPJ inválido. Deve conter 14 dígitos numéricos.")
+            vendedor["cnpj"] = obterEntrada("Insira o novo CNPJ do vendedor: ", validarCNPJ, "CNPJ inválido. Deve conter 14 dígitos numéricos.")
         elif opcao == "3":
             vendedor["email_vendedor"] = obterEntrada("Insira o email do vendedor: ", validarEmail, "Email inválido. Certifique-se de que contém '@' e '.'.")
         elif opcao == "4":
