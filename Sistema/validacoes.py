@@ -26,6 +26,10 @@ def validarTelefone(telefone):
     regex = r'^\d{8,}$'
     return re.match(regex, telefone) is not None
 
+def validarCEP(cep):
+    if not cep.isnumeric() or len(cep) != 8: return False
+    return True
+
 def validarNaoVazio(valor): return bool(valor.strip())
 
 def validarNumero(numero): return numero.isnumeric()
