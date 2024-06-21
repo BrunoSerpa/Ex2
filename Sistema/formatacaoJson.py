@@ -100,8 +100,8 @@ def comprasJson(arquivoJson, comCliente, comVendedor):
     if "valor_total" in arquivoJson: print(f'Valor total: R${arquivoJson["valor_total"]:.2f}')
     
 def formatar_telefone(telefone):
-    if len(telefone) == 8: return f'({telefone[0:4]}-{telefone[4:8]}'
-    if len(telefone) == 9: return f'({telefone[0:5]}-{telefone[5:9]}'
+    if len(telefone) == 8: return f'{telefone[0:4]}-{telefone[4:8]}'
+    if len(telefone) == 9: return f'{telefone[0:5]}-{telefone[5:9]}'
     if len(telefone) == 10: return f'({telefone[0:2]}) {telefone[2:6]}-{telefone[6:10]}'
     if len(telefone) == 11: return f'({telefone[0:2]}) {telefone[2:7]}-{telefone[7:11]}'
     else: return telefone
