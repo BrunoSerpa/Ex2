@@ -39,7 +39,7 @@ def vendedorJson(arquivoJson, comCodigo=False):
             count += 1
             print("-----------------------------------------------")
             print(f'{count}º Venda:')
-            comprasJson(venda, False, True)
+            comprasJson(venda, True, False, comCodigo)
     if "enderecos" in arquivoJson or "produtos" in arquivoJson or "vendas" in arquivoJson: print("-----------------------------------------------")
 
 
@@ -69,35 +69,26 @@ def usuarioJson(arquivoJson, comCodigo=False):
             count2 += 1
             print("-----------------------------------------------")
             print(f'{count2}º Compra:')
-            comprasJson(compra, True, False)
+            comprasJson(compra, False, True, comCodigo)
     if "enderecos" in arquivoJson or "favoritos" in arquivoJson: print("-----------------------------------------------")
         
-def comprasJson(arquivoJson, comCliente, comVendedor):
+def comprasJson(arquivoJson, comCliente=False, comVendedor=False, comCodigo=False):
+    print("Data da Compra:", arquivoJson.get("data_compra"))
     if comCliente:
-        if "nome_usuario" in arquivoJson: print(f'Nome: {arquivoJson["nome_usuario"]}')
-        if "cpf" in arquivoJson: print(f'Nome: {arquivoJson["cpf"]}')
-        if "endereco_usuario" in arquivoJson:
-            print("Endereços do usuário:")
-            enderecoJson(arquivoJson["endereco_cliente"])
+        if comCodigo: print("Código do Cliente:", arquivoJson.get("cod_cliente"))
+        print("Nome do Cliente:", arquivoJson.get("nome_cliente"))
+        print("CPF do Cliente:", arquivoJson.get("cpf"))
+        print("Endereço do Cliente:")
+        enderecoJson(arquivoJson.get("endereco_cliente"))
     if comVendedor:
-        if "nome_vendedor" in arquivoJson: print(f'Nome: {arquivoJson["nome_vendedor"]}')
-        if "cnpj" in arquivoJson: print(f'Nome: {arquivoJson["cnpj"]}')
-        if "endereco_vendedor" in arquivoJson:
-            print("Endereco Vendedor:")
-            enderecoJson(arquivoJson["endereco_vendedor"])
-    produtosVendidos=[*arquivoJson["produtos"]]
-    if len(produtosVendidos)==1:
-        print("Produto:")
-        print("-----------------------------------------------")
-        produtoJson(produtosVendidos[0])
-        print("-----------------------------------------------")
-    else:
-        print("Produtos vendidos:")
-        for produto in produtosVendidos:
-            print("-----------------------------------------------")
-            produtoJson(produto)
-        print("-----------------------------------------------")
-    if "valor_total" in arquivoJson: print(f'Valor total: R${arquivoJson["valor_total"]:.2f}')
+        if comCodigo: print("Código do Vendedor:", arquivoJson.get("cod_vendedor"))
+        print("Nome do Vendedor:", arquivoJson.get("nome_vendedor"))
+        print("CNPJ do Vendedor:", arquivoJson.get("cnpj"))
+        print("Endereço do Vendedor:")
+        enderecoJson(arquivoJson.get("endereco_vendedor"))
+    print("Produtos:")
+    for produto in arquivoJson.get("produtos", []): produtoJson(produto)
+    print("Valor Total:", arquivoJson.get("valor_total"))
     
 def formatar_telefone(telefone):
     if len(telefone) == 8: return f'{telefone[0:4]}-{telefone[4:8]}'
