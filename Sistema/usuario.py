@@ -6,6 +6,7 @@ from formatacaoJson import usuarioJson, enderecoJson, produtoJson
 from busca import buscarUsuario
 from endereco import cadastrarEnderecos, gerenciarEnderecos
 from favoritos import gerenciarFavoritos
+from compras import fazerCompra
 usuarios = conectar().Usuario
 
 def obterEntrada(mensagem, validacao, erroMensagem):
@@ -76,6 +77,7 @@ def atualizarUsuario():
         print("4 - Telefone")
         print("5 - Endereços")
         print("6 - Produtos favoritos")
+        print("7 - Fazer compras")
         print("--------------------------------")
         print("0 - Salvar e sair")
         print("================================")
@@ -103,7 +105,13 @@ def atualizarUsuario():
             usuario["enderecos"] = gerenciarEnderecos(usuario.get("enderecos", []))
         elif opcao == "6":
             usuario["favoritos"] = gerenciarFavoritos(usuario.get("favoritos", []))
-
+        elif opcao == "7":
+            novaCompra = fazerCompra(usuario)
+            if novaCompra:
+               if "compras" in usuario:
+                   usuario["compras"].append(novaCompra)
+               else:
+                   usuario["compras"]=[novaCompra]
 def deletarUsuario():
     while True:
         achouUsuario = buscarUsuario(input('Insira o nome do usuário desejado: '), 'nome', True)

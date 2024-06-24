@@ -159,7 +159,8 @@ def fazerCompra(cliente=None):
         print("Compra realizada com sucesso!")
     except Exception as e:
         print(f"Erro ao realizar a compra: {e}")
-
+        return
+    return compra
 def listarCompras():
     os.system('cls')
     print("Listando compras...")
