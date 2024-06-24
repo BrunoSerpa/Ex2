@@ -1,6 +1,7 @@
 from usuario import cadastrarUsuario, atualizarUsuario, listarUsuario, deletarUsuario
 from vendedor import cadastrarVendedor, atualizarVendedor, listarVendedor, deletarVendedor
 from produtos import cadastrarProduto, atualizarProduto, listarProduto, deletarProduto
+from compras import fazerCompra, listarVendas, listarCompras
 from validacoes import validarNaoVazio
 import os
 
@@ -55,8 +56,9 @@ def menuProduto():
 
 def menuCompra():
     opcoes = [
-        {"descricao": "Cadastar compra", "acao": cadastrarCompra},
-        {"descricao": "Listar compras", "acao": listarCompras}
+        {"descricao": "Cadastar compra", "acao": fazerCompra},
+        {"descricao": "Listar compras", "acao": listarCompras},
+        {"descricao": "Listar vendas", "acao": listarVendas}
     ]
     exibirMenu(opcoes, "Gerenciar Compras")
 
