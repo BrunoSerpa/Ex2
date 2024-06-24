@@ -1,5 +1,5 @@
 from conexaoMongo import conectar
-from formatacaoJson import usuarioJson, vendedorJson, produtoJson
+from formatacaoJson import usuarioJson, vendedorJson, produtoJson, comprasJson
 from bson.objectid import ObjectId
 
 def buscarDocumento(colecao, filtro, sort=None):
@@ -53,3 +53,46 @@ def buscarProduto(dadoProcurado, tipoDado, comCodigo=False, comVendedor=False):
         print("===========================================")
         return listaProdutos if len(listaProdutos) > 1 else listaProdutos[0]
     return buscarPorId(produtos, dadoProcurado)
+
+def buscarCompra(dadoProcurado, tipoDado, comCodigo=False):
+    compras = conectar().Compras
+    if tipoDado == 'nome_cliente':
+        filtro = {} if dadoProcurado == '' else {"nome_cliente": dadoProcurado}
+        listaCompras = buscarDocumento(compras, filtro, [("data_compra", 1)])
+        if not listaCompras:
+            print("Nenhuma compra encontrada!")
+            return False
+        for compra in listaCompras:
+            print("===========================================")
+            comprasJson(compra, False, True, comCodigo)
+        print("===========================================")
+        return listaCompras if len(listaCompras) > 1 else listaCompras[0]
+    elif tipoDado == 'cod_cliente':
+        compra = compras.find_one({"cod_cliente": ObjectId(dadoProcurado)})
+        if compra:
+            print("===========================================")
+            comprasJson(compra, False, True, comCodigo)
+            print("===========================================")
+        else:
+            print("Compra não encontrada!")
+        return compra
+    elif tipoDado == 'nome_vendedor':
+        filtro = {} if dadoProcurado == '' else {"nome_vendedor": dadoProcurado}
+        listaCompras = buscarDocumento(compras, filtro, [("data_compra", 1)])
+        if not listaCompras:
+            print("Nenhuma compra encontrada!")
+            return False
+        for compra in listaCompras:
+            print("===========================================")
+            comprasJson(compra, True, False, comCodigo)
+        print("===========================================")
+        return listaCompras if len(listaCompras) > 1 else listaCompras[0]
+    elif tipoDado == 'cod_vendedor':
+        compra = compras.find_one({"cod_vendedor": ObjectId(dadoProcurado)})
+        if compra:
+            print("===========================================")
+            comprasJson(compra, True, False, comCodigo)
+            print("===========================================")
+        else:
+            print("Compra não encontrada!")
+        return compra
