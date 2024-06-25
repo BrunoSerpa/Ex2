@@ -174,17 +174,3 @@ def listarCompras():
     else:
         print('Compras Existentes:')
         buscarCompra('', 'nome_cliente', False)
-
-def listarVendas():
-    os.system('cls')
-    print("Listando vendas...")
-    if input("Deseja procurar vendas de um vendedor específico? (S/N)\n").upper() == 'S':
-        while True:
-            nomeVendedor = input('Insira o nome do vendedor desejado: ')
-            achouUsuario = buscarCompra(nomeVendedor, 'nome_vendedor', True)
-            if not achouUsuario:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-            break
-    else:
-        print('Vendas Existentes:')
-        buscarCompra('', 'nome_vendedor', False)

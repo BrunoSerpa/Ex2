@@ -39,20 +39,6 @@ def cadastrarUsuario():
         print(f"Erro ao cadastrar usuário: {e}")
         input("Insira qualquer coisa para continuar...")
 
-def listarUsuario():
-    os.system('cls')
-    print("Listando usuários...")
-    if input("Deseja procurar um usuário específico? (S/N)\n").upper() == 'S':
-        while True:
-            nomeUsuario = input('Insira o nome do usuário desejado: ')
-            achouUsuario = buscarUsuario(nomeUsuario, 'nome', False)
-            if not achouUsuario:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-            break
-    else:
-        print('Usuários Existentes:')
-        buscarUsuario('', 'nome', False)
-
 def atualizarUsuario():
     os.system('cls')
     print("Editando usuário...")
