@@ -2,9 +2,10 @@ from datetime import datetime
 import os
 from busca import buscarCompra
 from conexaoMongo import conectar
+from conexaoRedis import cacheResultado, obterCache
 from validacoes import validarNaoVazio, validarNumero
 from busca import buscarUsuario, buscarVendedor
-from formatacaoJson import produtoJson, enderecoJson
+from formatacaoJson import produtoJson, enderecoJson, comprasJson
 compras = conectar().Compras
 vendedores = conectar().Vendedor
 usuarios = conectar().Usuario
@@ -16,18 +17,9 @@ def obterEntrada(mensagem, validacao, erroMensagem):
         else: return entrada
 
 def fazerCompra(cliente=None):
-    os.system('cls')
+    os.system('cls' if os.name == 'nt' else 'clear')
     print("Fazendo compras...")
-    while not cliente:
-        achouUsuario = buscarUsuario(input('Insira o nome do cliente: '), 'nome', True)
-        if isinstance(achouUsuario, dict): cliente = achouUsuario
-        elif not achouUsuario:
-            if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
-        else:
-            cliente = buscarUsuario(input('Insira o id do cliente: '), 'id', False)
-            if not cliente:
-                if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
-    
+    if not cliente: return
     if not cliente.get("enderecos"):
         print("Cadastre um endereço no cliente antes de fazer uma compra!")
         return
@@ -50,20 +42,20 @@ def fazerCompra(cliente=None):
                 if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
                 else: continue
             break
-    else:
-        enderecoCliente = enderecosCliente[0]
+    else: enderecoCliente = enderecosCliente[0]
     vendedor = None
-
     while not vendedor:
-        achouVendedor = buscarVendedor(input('Insira o nome do vendedor: '), 'nome', True)
+        dadoProcurado = input('Insira o nome do vendedor: ')
+        chaveCacheVendedor = f"vendedor:nome:{dadoProcurado}"
+        vendedor = obterCache(chaveCacheVendedor)
+        if not vendedor: achouVendedor = buscarVendedor(dadoProcurado, 'nome', True)
         if isinstance(achouVendedor, dict): vendedor = achouVendedor
         elif not achouVendedor:
             if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
-        else:
-            vendedor = buscarVendedor(input('Insira o id do vendedor: '), 'id', False)
-            if not vendedor:
-                if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
-
+        else: vendedor = buscarVendedor(input('Insira o id do vendedor: '), 'id', False)
+        if not vendedor:
+            if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
+        cacheResultado(chaveCacheVendedor, vendedor)
     if not vendedor.get("enderecos"):
         print("Cadastre pelo menos um endereço no vendedor antes de fazer uma compra!")
         return
@@ -86,14 +78,13 @@ def fazerCompra(cliente=None):
                 if input("Deseja procurar novamente? (S/N)\n").upper() != 'S': return
                 else: continue
             break
-    else:
-        enderecoVendedor = enderecosVendedor[0]
+    else: enderecoVendedor = enderecosVendedor[0]
     produtosVendedor = vendedor.get("produtos", [])
     produtos = []
     valorTotal = 0
     if len(produtosVendedor) > 1:
         while len(produtosVendedor) > 1:
-            os.system('cls')
+            os.system('cls' if os.name == 'nt' else 'clear')
             print("Escolha os produtos a serem comprados:")
             for i, produto in enumerate(produtosVendedor, start=1):
                 print(f"{i} - Produto {i}:")
@@ -114,8 +105,7 @@ def fazerCompra(cliente=None):
                         valorTotal += produtoEscolhido["valor_produto"]
                         break
                 if input("Deseja comprar mais algum produto? (S/N)\n").upper() != 'S': break
-            else:
-                print("Posição de produto inválida!")
+            else: print("Posição de produto inválida!")
     elif len(produtosVendedor) == 1:
         produtos.append(produtosVendedor[0])
         valorTotal = produtosVendedor[0]["valor_produto"]
@@ -142,7 +132,7 @@ def fazerCompra(cliente=None):
         "valor_total": valorTotal
     }
     try:
-        compras.insert_one(compra)
+        compras.insert_one(compra)   
         usuarios.update_one(
             {"_id": codCliente},
             {"$push": {"compras": compra}}
@@ -156,21 +146,25 @@ def fazerCompra(cliente=None):
                 {"_id": codVendedor},
                 {"$pull": {"produtos": {"_id": produto["_id"]}}}
             )        
+        chave_cache_compra = f"compra:cod_cliente:{codCliente}"
+        cacheResultado(chave_cache_compra, compra)
         print("Compra realizada com sucesso!")
     except Exception as e:
         print(f"Erro ao realizar a compra: {e}")
         return
     return compra
-def listarCompras():
-    os.system('cls')
+
+def listarCompras(cliente=None):
+    if not cliente:
+        print("Usuário não autenticado!")
+        return
+    os.system('cls' if os.name == 'nt' else 'clear')
     print("Listando compras...")
-    if input("Deseja procurar compras de um usuário específico? (S/N)\n").upper() == 'S':
-        while True:
-            nomeUsuario = input('Insira o nome do usuário desejado: ')
-            achouUsuario = buscarCompra(nomeUsuario, 'nome_cliente', True)
-            if not achouUsuario:
-                if input("Deseja procurar novamente? (S/N)\n").upper() == 'S': continue
-            break
+    compras = cliente["compras"]
+    if not compras: print("Nenhuma compra encontrada neste usuário.")
     else:
-        print('Compras Existentes:')
-        buscarCompra('', 'nome_cliente', False)
+        print("Compras do usuário:")
+        for compra in compras:
+            print("===========================================")
+            comprasJson(compra,comVendedor=True)
+        print("===========================================")
