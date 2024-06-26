@@ -8,7 +8,7 @@ def exibirFavoritos(favoritos):
     else:
         for favorito in favoritos:
             print("================================")
-            produtoJson(favorito, False, True)
+            produtoJson(favorito, True, True)
         print("================================")
 
 def obterIdProduto(prompt):
@@ -19,7 +19,11 @@ def obterIdProduto(prompt):
             print("Erro ao processar a entrada. Certifique-se de inserir um ID válido.")
             print(e)
 
-def gerenciarFavoritos(favoritos):
+def gerenciarFavoritos(cliente=None):
+    if not cliente:
+        print("Usuário não autenticado!")
+        return
+    favoritos = cliente["favoritos"]
     print("Favoritos Atuais:")
     exibirFavoritos(favoritos)
     
